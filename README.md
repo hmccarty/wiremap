@@ -10,7 +10,7 @@ crontab -e
 
 Add the following line:
 ```
-*/5 * * * * .$HOME/collect.py
+*/5 * * * * <location of script>/collect.py
 ```
 
 ## Visualize
