@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
+
 import matplotlib
-matplotlib.use('Qt5Agg')
+try:
+    matplotlib.use('Qt5Agg')
+except:
+    print("PyQt5 is required")
+    exit()
+
+import argparse
 import matplotlib.pyplot as plt
 import os
 import sys
@@ -38,9 +45,15 @@ def on_close(event):
     exit()
 
 def main(): 
-    num_ips = 4294967296
-    start_address = "192.168.0.1"
-    end_address = "255.255.255.255"
+
+    parser = argparse.ArgumentParser(prog='plot')
+    parser.add_argument('-s', '--start-address', type=str, default='0.0.0.0')
+    parser.add_argument('-e', '--end-address', type=str, default='255.255.255.255')
+    args = parser.parse_args()
+
+    num_ips = 4294967296 # Assume IPv4
+    start_address = args.start_address
+    end_address = args.end_address
 
     def d2ip(d):
         return [str(ipaddress.ip_address(int(i))) for i in d]
@@ -48,6 +61,19 @@ def main():
     # Setup plot
     fig, ax = plt.subplots()
     fig.canvas.mpl_connect('close_event', on_close)
+
+    # Source connected IPs
+    if len(sys.argv) < 2:
+        script_dir = os.path.realpath(os.path.dirname(__file__))
+        input_file = os.path.join(script_dir, 'ips')
+    else:
+        input_file = sys.argv[1]
+
+    my_ips = set()
+    with open(input_file) as f:
+        for line in f.readlines():
+            _, ip = line.split(',')
+            my_ips.add(int(ipaddress.ip_address(ip.strip())))
 
     # Create hilbert curve of all IPs 
     all_ip_x = []
@@ -61,26 +87,13 @@ def main():
         ax.set_yticklabels(d2ip(all_ip_y), rotation=45)
         ax.set_xticklabels(d2ip(all_ip_x), rotation=45)
         ax.plot(all_ip_x, all_ip_y)
+
+        if d in my_ips:
+            ax.plot(x, y, 'o', color='red')
+
         plt.draw()
         plt.pause(0.001)
 
-    # Source connected IPs
-    if len(sys.argv) < 2:
-        script_dir = os.path.realpath(os.path.dirname(__file__))
-        input_file = os.path.join(script_dir, 'ips')
-    else:
-        input_file = sys.argv[1]
-
-    my_ip_x = []
-    my_ip_y = []
-    with open(input_file) as f:
-        for line in f.readlines():
-            print(line)
-            _, ip = line.split(',')
-            d = int(ipaddress.ip_address(ip.strip()))
-            x, y = get_hilbert_point(num_ips, d)
-            my_ip_x.append(x)
-            my_ip_y.append(y)
 
     # Plot data
     # ax.plot(all_ip_x, all_ip_y)
