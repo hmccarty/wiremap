@@ -13,6 +13,7 @@ import os
 import sys
 import numpy as np
 import ipaddress
+from multiprocessing import Process, Queue
 
 def get_hilbert_point(n, d):
     """
@@ -40,12 +41,14 @@ def get_hilbert_point(n, d):
         s *= 2
     return x, y
 
+def compute_range(start, end, output):
+    pass
+
 def on_close(event):
     print("Exiting...")
     exit()
 
 def main(): 
-
     parser = argparse.ArgumentParser(prog='plot')
     parser.add_argument('-s', '--start-address', type=str, default='0.0.0.0')
     parser.add_argument('-e', '--end-address', type=str, default='255.255.255.255')
@@ -70,10 +73,22 @@ def main():
         input_file = sys.argv[1]
 
     my_ips = set()
+    ip_blocks = set()
     with open(input_file) as f:
         for line in f.readlines():
             _, ip = line.split(',')
-            my_ips.add(int(ipaddress.ip_address(ip.strip())))
+            ip = ip.strip()
+            ip_blocks.add(ip.split('.', 1)[0])
+            my_ips.add(int(ipaddress.ip_address(ip)))
+
+    draw_queue = Queue()
+
+    for _ in range(len(ip_blocks)):
+        p = Process(target=compute_range, args=(start, end, draw_queue))
+        p.start()
+
+    while draw_queue.:
+
 
     # Create hilbert curve of all IPs 
     all_ip_x = []
